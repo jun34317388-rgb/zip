@@ -16,10 +16,10 @@ import { validateFilePreUpload } from '@/lib/pdf/validator';
 import { extractTextFromPDF } from '@/lib/pdf/extractor';
 import { fetchWithRetry, AppApiError } from '@/lib/api/retry-client';
 import { SampleLecture } from '@/lib/sample-data';
-import { LandingView } from '@/components/landing-view';
 import { UploadView } from '@/components/upload-view';
 import { OutlineView } from '@/components/outline-view';
 import { DetailView } from '@/components/detail-view';
+import { LandingView } from '@/components/landing-view';
 import { DevPanel } from '@/components/dev-panel';
 
 export default function Page() {
@@ -497,46 +497,47 @@ export default function Page() {
 
   return (
     <div className={dark ? 'dark min-h-screen bg-background text-foreground' : 'min-h-screen bg-background text-foreground'}>
-      <header className="sticky top-0 z-20 border-b border-border/80 bg-background/85 backdrop-blur-md transition-colors">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-5">
           <button
             onClick={() => setView('landing')}
-            className="flex items-center gap-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg transition-transform active:scale-[0.98]"
+            className="flex items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg transition-opacity hover:opacity-90"
           >
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
-              <FileText className="size-4" />
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <FileText className="size-5" />
             </span>
-            <span className="text-sm font-bold tracking-tight sm:text-base text-foreground">
-              강의자료 목차 요약·퀴즈
-            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight sm:text-base leading-none">Academia AI</span>
+              <span className="text-[10px] text-muted-foreground font-medium mt-0.5">강의자료 목차 요약·퀴즈</span>
+            </div>
           </button>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {view === 'landing' ? (
               <Button
-                size="sm"
                 onClick={() => setView('upload')}
-                className="h-9 px-4 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-xs transition-all active:scale-[0.98]"
+                size="sm"
+                className="h-9 px-4 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-transform active:scale-[0.98]"
               >
-                분석 시작하기
+                학습 시작하기
               </Button>
             ) : (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setView('landing')}
-                className="h-9 px-3 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg"
+                className="h-9 px-3 text-xs font-semibold text-muted-foreground hover:text-foreground"
               >
-                홈으로
+                소개 페이지
               </Button>
             )}
 
             <Button
               variant="ghost"
               size="icon"
-              className="size-9 rounded-lg"
               aria-label={dark ? '라이트 모드' : '다크 모드'}
               onClick={() => setDark(!dark)}
+              className="size-9 rounded-lg"
             >
               {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </Button>
@@ -547,8 +548,12 @@ export default function Page() {
       <main className="mx-auto flex w-full max-w-4xl flex-col px-5 py-8 sm:py-12">
         {view === 'landing' && (
           <LandingView
-            onStart={() => setView('upload')}
+            onGetStarted={() => setView('upload')}
             onSelectSample={handleSelectSample}
+            onFileDrop={(droppedFile) => {
+              chooseFile(droppedFile);
+              setView('upload');
+            }}
           />
         )}
         {view === 'upload' && (

@@ -1,6 +1,5 @@
 export type View = 'landing' | 'upload' | 'outline' | 'detail';
 
-
 export type ExceptionKey =
   | 'none'
   | 'EMPTY_FILE'         // 5.1 업로드할 PDF 파일을 먼저 선택해주세요.
