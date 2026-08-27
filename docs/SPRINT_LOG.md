@@ -19,7 +19,7 @@
 | **Sprint 7** | [고도화] SSE 실시간 요약 스트리밍 & 체감 지연 단축 | 완료 (Done) | 100% |
 | **Sprint 8** | [고도화] 오답 맞춤형 힌트 & 복습 가이드 생성 | 완료 (Done) | 100% |
 | **Sprint 9** | [고도화] 난이도 선택형 퀴즈 (기초 ↔ 심화) | 완료 (Done) | 100% |
-| **Sprint 10** | [고도화] 핵심 용어집(Glossary) 추출 & 호버 툴팁 | 대기 (Ready) | 0% |
+| **Sprint 10** | [고도화] 핵심 용어집(Glossary) 추출 & 호버 툴팁 | 완료 (Done) | 100% |
 
 ---
 
@@ -82,6 +82,7 @@
 - [x] 상세 화면 상단 난이도 선택 칩 (`[🌱 기초 개념]` ↔ `[🔥 심화 응용]`) 및 난이도별 캐싱 분리 연동
 - [x] `scratch/test_sprint9_difficulty.mjs` 자동화 검증 통과
 
-### [Sprint 10] 핵심 용어집(Glossary) 추출 & 호버 툴팁 (대기)
-- [ ] 목차별 핵심 전공 용어 3~5개 추출 API (`/api/ai/glossary`)
-- [ ] 요약 본문 내 주요 키워드 호버 툴팁 및 용어 사전 카드 렌더링
+### [Sprint 10] 핵심 용어집(Glossary) 추출 & 호버 툴팁 (완료)
+- [x] 목차별 핵심 전공 용어 3~5개 추출 API 라우트 구현 (`/api/ai/glossary/route.ts`)
+- [x] 요약 화면 하단 "📖 핵심 전공 용어 사전 (Glossary)" 카드 렌더링 연동
+- [x] `scratch/test_sprint10_glossary.mjs` 자동화 검증 통과

@@ -8,6 +8,7 @@ import {
   OutlineItem,
   PDFExtractResult,
   PRD_ERROR_MESSAGES,
+  QuizDifficulty,
   TopicDetailCache,
   View,
 } from '@/lib/types';
@@ -261,6 +262,9 @@ export default function Page() {
         },
       }));
       setIsStreaming(false);
+
+      // 용어집 백그라운드 로드
+      loadGlossaryForOutline(outline);
     } catch (err: any) {
       console.error('Summary stream error:', err);
       setIsStreaming(false);
@@ -268,6 +272,30 @@ export default function Page() {
       const key: ExceptionKey =
         err.message in PRD_ERROR_MESSAGES ? (err.message as ExceptionKey) : 'AI_FAILED_SUMMARY';
       setDetailError(key);
+    }
+  };
+
+  // 핵심 용어집 로드 (캐시 우선)
+  const loadGlossaryForOutline = async (outline: OutlineItem) => {
+    if (cache[outline.id]?.glossary && cache[outline.id]!.glossary!.length > 0) return;
+    try {
+      const res = await fetch('/api/ai/glossary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentSlice: outline.contentSlice, title: outline.title }),
+      });
+      const data = await res.json();
+      if (data.success && data.glossary) {
+        setCache((prev) => ({
+          ...prev,
+          [outline.id]: {
+            ...(prev[outline.id] || { quizzes: [], userAnswers: {} }),
+            glossary: data.glossary,
+          },
+        }));
+      }
+    } catch {
+      // 용어집 로드 실패는 치명적이지 않으므로 조용히 무시
     }
   };
 
@@ -448,6 +476,7 @@ export default function Page() {
   const fileLabel = pdfData?.fileName ?? file?.name ?? '강의자료.pdf';
   const currentTopicCache = selectedOutline ? cache[selectedOutline.id] : undefined;
   const currentSummaries = currentTopicCache?.summary || [];
+  const currentGlossary = currentTopicCache?.glossary || [];
   const currentQuizzes =
     difficulty === 'advanced'
       ? currentTopicCache?.advancedQuizzes || []
@@ -537,6 +566,7 @@ export default function Page() {
             streamingText={streamingText}
             isStreaming={isStreaming}
             summaries={currentSummaries}
+            glossary={currentGlossary}
             quizzes={currentQuizzes}
             answers={currentAnswers}
             answer={answerQuiz}

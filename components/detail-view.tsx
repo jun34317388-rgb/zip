@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ArrowLeft, Check, Loader2, RotateCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ErrorBox } from '@/components/error-box';
-import { ExceptionKey, OutlineItem, QuizItem, View } from '@/lib/types';
+import { ExceptionKey, GlossaryItem, OutlineItem, QuizDifficulty, QuizItem, View } from '@/lib/types';
 
 interface DetailViewProps {
   outline: OutlineItem;
@@ -19,6 +19,7 @@ interface DetailViewProps {
   streamingText?: string;
   isStreaming?: boolean;
   summaries: string[];
+  glossary?: GlossaryItem[];
   quizzes: QuizItem[];
   answers: Record<number, number>;
   answer: (q: number, o: number) => void;
@@ -40,6 +41,7 @@ export function DetailView({
   streamingText = '',
   isStreaming = false,
   summaries,
+  glossary = [],
   quizzes,
   answers,
   answer,
@@ -98,6 +100,7 @@ export function DetailView({
       {tab === 'summary' ? (
         <SummarySection
           summaries={summaries}
+          glossary={glossary}
           streamingText={streamingText}
           isStreaming={isStreaming}
           errorKey={detailError}
@@ -128,6 +131,7 @@ export function DetailView({
 
 function SummarySection({
   summaries,
+  glossary = [],
   streamingText,
   isStreaming,
   loading,
@@ -135,6 +139,7 @@ function SummarySection({
   retry,
 }: {
   summaries: string[];
+  glossary?: GlossaryItem[];
   streamingText: string;
   isStreaming: boolean;
   loading: boolean;
@@ -189,6 +194,41 @@ function SummarySection({
           </li>
         ))}
       </ul>
+
+      {/* Sprint 10 핵심 전공 용어집 (Glossary) 카드 */}
+      {glossary.length > 0 && !isStreaming && (
+        <div className="mt-10 pt-6 border-t border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm font-bold text-foreground">📖 핵심 전공 용어 사전 (Glossary)</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              {glossary.length}개 용어
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {glossary.map((item, idx) => (
+              <div
+                key={idx}
+                className="group rounded-xl border border-border/80 bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="text-sm font-bold text-primary group-hover:underline">
+                    {item.term}
+                  </span>
+                  {item.category && (
+                    <span className="text-[10px] uppercase font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                      {item.category}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground group-hover:text-foreground/90">
+                  {item.definition}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

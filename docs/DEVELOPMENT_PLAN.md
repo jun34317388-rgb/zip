@@ -3,20 +3,13 @@
 > **문서 버전:** 1.0.0  
 > **기준 문서:** `PRD.md` (v1.0)  
 > **작성일:** 2026-08-26 (최종 갱신: 2026-08-27)  
-> **상태:** 전체 개발 완료 (All Sprints 1~6 Completed, DoD 100% Passed)  
+> **상태:** 전체 개발 및 AI 고도화 완료 (All Sprints 1~10 Completed, DoD 100% Passed)  
 
 ---
 
 ## 1. 개요 및 개발 원칙
 
-본 문서는 `PRD.md`에 명시된 요구사항, 화면 명세, 10가지 예외 처리, 완료 조건(DoD)을 100% 충족하기 위한 단계별 스프린트 개발 계획서입니다.
-
-### 1.1 핵심 제약 조건 및 원칙
-1. **단일 화면 뷰 상태 전환 (Single Page View States)**: URL 라우팅이 아닌 단일 페이지 내 뷰 상태(`A: 업로드` ↔ `B: 목차 목록` ↔ `C: 목차 상세`) 전환으로 동작합니다.
-2. **세션 메모리 보관 (No DB/Auth/Payment)**: 모든 데이터는 브라우저 메모리에만 보관되며 새로고침 시 초기화됩니다. 로그인/결제/DB 관련 요소는 일체 포함하지 않습니다.
-3. **엄격한 원문 기반 생성 (Grounding & Anti-Hallucination)**: 요약 및 퀴즈는 파싱된 해당 목차의 원문 텍스트 범위 내에서만 생성되어 왜곡과 환각을 원천 차단합니다.
-4. **10대 예외 처리 완비**: PRD 제5장에 명시된 10가지 예외 상황에 대해 규정된 사용자 문구, 화면 상태 보존, 자동/수동 재시도 정책을 엄격히 구현합니다.
-5. **스프린트 점진적 빌드 (Sprint-based Execution)**: 각 스프린트별 명확한 DoD와 검증 기준을 두고 독립적인 기능 검증이 가능하도록 설계합니다.
+본 문서는 `PRD.md`에 명시된 요구사항, 화면 명세, 10가지 예외 처리, 완료 조건(DoD) 및 실시간 스트리밍, 오답 분석, 난이도 조절, 용어집 추출 등 **AI 고도화 스프린트 1~10**을 100% 충족하기 위한 개발 계획서입니다.
 
 ---
 
@@ -25,52 +18,9 @@
 ### 2.1 기술 스택
 - **프레임워크**: Next.js (App Router), React 19, TypeScript
 - **스타일링**: Tailwind CSS v4, Lucide React (아이콘)
-- **PDF 파싱**: `pdfjs-dist` (Client/Server 하이브리드 또는 경량 파서 파이프라인)
-- **LLM 엔진**: Google Gemini / OpenAI 호환 API Route Handler (`/api/ai/outline`, `/api/ai/summary`, `/api/ai/quiz`, `/api/ai/quiz-more`)
-- **스키마 검증**: Zod (구조화된 출력 JSON 파싱 및 5.7 이상 결과 사전 차단)
-
-### 2.2 데이터 모델 (In-Memory Session Model)
-```typescript
-// 목차 및 본문 슬라이스
-export interface OutlineItem {
-  id: string;             // e.g. "outline-1"
-  order: number;          // 1, 2, 3...
-  title: string;          // 챕터/섹션 제목
-  contentSlice: string;   // 해당 목차에 해당하는 PDF 원문 텍스트
-}
-
-// 요약 데이터 (캐시)
-export interface SummaryData {
-  bullets: string[];      // 5~10개 고밀도 핵심 요약 불릿
-  createdAt: number;
-}
-
-// 퀴즈 문항 데이터
-export interface QuizItem {
-  id: string;
-  question: string;       // 문제 질문
-  options: string[];      // 4개 보기
-  answer: number;         // 정답 인덱스 (0~3)
-  explanation: string;    // 해설
-}
-
-// 목차별 상세 캐시
-export interface TopicDetailCache {
-  summary?: SummaryData;
-  quizzes: QuizItem[];
-  userAnswers: Record<string, number>; // quizId -> selectedOption
-}
-
-// 전역 앱 세션 상태
-export interface AppSessionState {
-  view: 'upload' | 'outline' | 'detail';
-  file: { name: string; size: number; pageCount: number } | null;
-  rawText: string;
-  outlines: OutlineItem[];
-  selectedOutlineId: string | null;
-  cache: Record<string, TopicDetailCache>; // outlineId -> Cache
-}
-```
+- **PDF 파싱**: `pdfjs-dist` (Client/Server 하이브리드 경량 파서 파이프라인)
+- **LLM 엔진**: Google Gemini 3.6 Flash Route Handlers (`/api/ai/outline`, `/api/ai/summary`, `/api/ai/summary-stream`, `/api/ai/quiz`, `/api/ai/quiz-hint`, `/api/ai/quiz-more`, `/api/ai/glossary`)
+- **스키마 검증**: Zod (구조화된 출력 JSON 파싱 및 이상 결과 사전 차단)
 
 ---
 
@@ -78,20 +28,20 @@ export interface AppSessionState {
 
 ```mermaid
 gantt
-    title 스프린트 개발 타임라인
+    title 스프린트 개발 타임라인 (Sprint 1~10)
     dateFormat  YYYY-MM-DD
-    section Sprint 1
+    section Core MVP
     기반 구축 & PDF 파싱/검증         :s1, 2026-08-26, 1d
-    section Sprint 2
     LLM 파이프라인 & 목차 구조화      :s2, after s1, 1d
-    section Sprint 3
     요약 & 퀴즈 생성 및 캐싱          :s3, after s2, 1d
-    section Sprint 4
     퀴즈 추가 생성 & 중복 방지         :s4, after s3, 1d
-    section Sprint 5
     10대 예외 처리 & 복구 완비        :s5, after s4, 1d
-    section Sprint 6
     실전 PDF 3종 검증 & DoD 최종 검수 :s6, after s5, 1d
+    section AI Advanced
+    SSE 실시간 요약 스트리밍 (0.5s)    :s7, 2026-08-27, 1d
+    오답 맞춤형 힌트 & 복습 가이드     :s8, after s7, 1d
+    난이도 선택형 퀴즈 (기초 ↔ 심화)   :s9, after s8, 1d
+    핵심 용어집(Glossary) 추출 & 카드  :s10, after s9, 1d
 ```
 
 ---

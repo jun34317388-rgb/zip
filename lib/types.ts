@@ -59,11 +59,19 @@ export interface QuizItem {
   difficulty?: QuizDifficulty;
 }
 
+export interface GlossaryItem {
+  term: string;
+  definition: string;
+  category?: string;
+}
+
 export interface TopicDetailCache {
   summary?: string[];
+  glossary?: GlossaryItem[];
   quizzes: QuizItem[];
   userAnswers: Record<number, number>;
   advancedQuizzes?: QuizItem[];
   advancedAnswers?: Record<number, number>;
 }
+
 
