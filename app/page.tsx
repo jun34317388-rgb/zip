@@ -32,6 +32,8 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [loadingDelayed, setLoadingDelayed] = useState(false);
   const [contentLoading, setContentLoading] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
   const [uploadError, setUploadError] = useState<ExceptionKey>('none');
   const [detailError, setDetailError] = useState<ExceptionKey>('none');
   const [dark, setDark] = useState(true);
@@ -42,14 +44,14 @@ export default function Page() {
   // 5.10 분석 진행 중 이탈 방지 경고 (브라우저 기본 다이얼로그)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (loading || contentLoading || adding) {
+      if (loading || contentLoading || adding || isStreaming) {
         e.preventDefault();
         e.returnValue = '';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [loading, contentLoading, adding]);
+  }, [loading, contentLoading, adding, isStreaming]);
 
   // 5.9 네트워크 온라인/오프라인 상태 감지
   useEffect(() => {
@@ -57,8 +59,9 @@ export default function Page() {
       if (loading) {
         setLoading(false);
         setUploadError('NETWORK_ERROR');
-      } else if (contentLoading || adding) {
+      } else if (contentLoading || adding || isStreaming) {
         setContentLoading(false);
+        setIsStreaming(false);
         setAdding(false);
         setDetailError('NETWORK_ERROR');
       }
@@ -74,7 +77,7 @@ export default function Page() {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
     };
-  }, [loading, contentLoading, adding]);
+  }, [loading, contentLoading, adding, isStreaming]);
 
   const chooseFile = (next: File | undefined) => {
     if (!next) return;
@@ -178,50 +181,92 @@ export default function Page() {
     runAnalysis(sample.fullText, sample.fileName);
   };
 
-  // 온디맨드 요약 로드 (캐시 우선 & 공통 재시도)
+  // SSE 실시간 스트리밍 요약 로드 (Sprint 7 고도화)
   const loadSummaryForOutline = async (outline: OutlineItem) => {
     const existing = cache[outline.id]?.summary;
     if (existing && existing.length > 0) {
       setDetailError('none');
+      setStreamingText('');
+      setIsStreaming(false);
       return;
     }
 
     setContentLoading(true);
+    setIsStreaming(true);
+    setStreamingText('');
     setDetailError('none');
 
     try {
-      const res = await fetchWithRetry<{ bullets: string[] }>(
-        '/api/ai/summary',
-        { contentSlice: outline.contentSlice, title: outline.title },
-        {
-          timeoutMs: 25000,
-          errorKeyFallback: 'AI_FAILED_SUMMARY',
-          maxRetries: 1,
-        }
-      );
+      const res = await fetch('/api/ai/summary-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentSlice: outline.contentSlice, title: outline.title }),
+      });
 
-      if (!res.bullets || res.bullets.length === 0) {
-        throw new AppApiError('AI_FAILED_SUMMARY');
+      if (!res.ok || !res.body) {
+        throw new Error('AI_FAILED_SUMMARY');
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulated = '';
+
+      setContentLoading(false);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (!dataStr || dataStr === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.fullText) {
+                accumulated = parsed.fullText;
+                setStreamingText(accumulated);
+              } else if (parsed.bullet) {
+                accumulated += (accumulated ? '\n' : '') + parsed.bullet;
+                setStreamingText(accumulated);
+              }
+            } catch {
+              // 파싱 무시
+            }
+          }
+        }
+      }
+
+      const finalBullets = accumulated
+        .split('\n')
+        .map((l) => l.replace(/^[-*•\d.\s]+/, '').trim())
+        .filter(Boolean);
+
+      if (finalBullets.length === 0) {
+        throw new Error('AI_FAILED_SUMMARY');
       }
 
       setCache((prev) => ({
         ...prev,
         [outline.id]: {
           ...(prev[outline.id] || { quizzes: [], userAnswers: {} }),
-          summary: res.bullets,
+          summary: finalBullets,
         },
       }));
-      setContentLoading(false);
+      setIsStreaming(false);
     } catch (err: any) {
-      console.error('Summary load error:', err);
-      const key: ExceptionKey =
-        err instanceof AppApiError
-          ? err.errorKey
-          : err.message in PRD_ERROR_MESSAGES
-          ? (err.message as ExceptionKey)
-          : 'AI_FAILED_SUMMARY';
-      setDetailError(key);
+      console.error('Summary stream error:', err);
+      setIsStreaming(false);
       setContentLoading(false);
+      const key: ExceptionKey =
+        err.message in PRD_ERROR_MESSAGES ? (err.message as ExceptionKey) : 'AI_FAILED_SUMMARY';
+      setDetailError(key);
     }
   };
 
@@ -445,6 +490,8 @@ export default function Page() {
             detailError={detailError}
             setDetailError={setDetailError}
             loading={contentLoading}
+            streamingText={streamingText}
+            isStreaming={isStreaming}
             summaries={currentSummaries}
             quizzes={currentQuizzes}
             answers={currentAnswers}

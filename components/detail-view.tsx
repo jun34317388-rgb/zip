@@ -13,6 +13,8 @@ interface DetailViewProps {
   detailError: ExceptionKey;
   setDetailError: (v: ExceptionKey) => void;
   loading: boolean;
+  streamingText?: string;
+  isStreaming?: boolean;
   summaries: string[];
   quizzes: QuizItem[];
   answers: Record<number, number>;
@@ -30,6 +32,8 @@ export function DetailView({
   setView,
   detailError,
   loading,
+  streamingText = '',
+  isStreaming = false,
   summaries,
   quizzes,
   answers,
@@ -89,6 +93,8 @@ export function DetailView({
       {tab === 'summary' ? (
         <SummarySection
           summaries={summaries}
+          streamingText={streamingText}
+          isStreaming={isStreaming}
           errorKey={detailError}
           loading={loading}
           retry={retry}
@@ -113,16 +119,30 @@ export function DetailView({
 
 function SummarySection({
   summaries,
+  streamingText,
+  isStreaming,
   loading,
   errorKey,
   retry,
 }: {
   summaries: string[];
+  streamingText: string;
+  isStreaming: boolean;
   loading: boolean;
   errorKey: ExceptionKey;
   retry: () => void;
 }) {
-  if (loading) {
+  // 스트리밍 텍스트 파싱
+  const parsedStreamingBullets = streamingText
+    ? streamingText
+        .split('\n')
+        .map((l) => l.replace(/^[-*•\d.\s]+/, '').trim())
+        .filter(Boolean)
+    : [];
+
+  const displayBullets = summaries.length > 0 ? summaries : parsedStreamingBullets;
+
+  if (loading && displayBullets.length === 0 && !isStreaming) {
     return (
       <div className="mt-8 flex flex-col gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -135,7 +155,7 @@ function SummarySection({
     );
   }
 
-  if (errorKey !== 'none') {
+  if (errorKey !== 'none' && displayBullets.length === 0) {
     return (
       <div className="mt-8">
         <ErrorBox errorKey={errorKey} retry={retry} />
@@ -145,9 +165,16 @@ function SummarySection({
 
   return (
     <div className="mt-8">
+      {isStreaming && (
+        <div className="mb-4 flex items-center gap-2 text-xs font-semibold text-primary animate-pulse">
+          <Loader2 className="size-3.5 animate-spin" />
+          <span>실시간으로 핵심 요약을 작성하고 있습니다...</span>
+        </div>
+      )}
+
       <ul className="flex flex-col gap-4">
-        {summaries.map((text, idx) => (
-          <li key={idx} className="flex gap-4 text-sm leading-7 text-foreground/90 sm:text-base">
+        {displayBullets.map((text, idx) => (
+          <li key={idx} className="flex gap-4 text-sm leading-7 text-foreground/90 sm:text-base animate-in fade-in">
             <span className="mt-2.5 size-2 shrink-0 rounded-full bg-primary" />
             <span className="flex-1">{text}</span>
           </li>

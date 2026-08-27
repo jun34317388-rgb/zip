@@ -16,6 +16,10 @@
 | **Sprint 4** | 퀴즈 추가 생성 ("문제 더 풀기") & 중복 방지 | 완료 (Done) | 100% |
 | **Sprint 5** | 10대 예외 처리 완비 & 복구 메커니즘 구축 | 완료 (Done) | 100% |
 | **Sprint 6** | 실전 검증(PDF 3종) & DoD 최종 검수 | 완료 (Done) | 100% |
+| **Sprint 7** | [고도화] SSE 실시간 요약 스트리밍 & 체감 지연 단축 | 완료 (Done) | 100% |
+| **Sprint 8** | [고도화] 오답 맞춤형 힌트 & 복습 가이드 생성 | 대기 (Ready) | 0% |
+| **Sprint 9** | [고도화] 난이도 선택형 퀴즈 (기초 ↔ 심화) | 대기 (Ready) | 0% |
+| **Sprint 10** | [고도화] 핵심 용어집(Glossary) 추출 & 호버 툴팁 | 대기 (Ready) | 0% |
 
 ---
 
@@ -61,3 +65,21 @@
 - [x] 업로드 화면 내 원클릭 "샘플 강의자료로 체험하기 (3종)" 퀵스타트 UI 연동 (`components/upload-view.tsx`)
 - [x] PRD 제6장 Definition of Done 8개 항목 전수 검수 완료 (`scratch/test_sprint6_dod.mjs`, `docs/TEST_REPORT.md`)
 - [x] 다크/라이트 모드 및 인터랙션 폴리싱 완료
+
+### [Sprint 7] SSE 실시간 요약 스트리밍 & 체감 지연 최적화 (완료)
+- [x] `/api/ai/summary-stream` Next.js SSE Route Handler 구현 (`app/api/ai/summary-stream/route.ts`)
+- [x] Gemini 3.6 Flash `streamGenerateContent?alt=sse` 실시간 청크 전송 파이프라인 구축
+- [x] `DetailView` 및 `app/page.tsx` 실시간 스트리밍 타이핑 렌더러 연동 (체감 지연 0.5s 단축)
+- [x] 스트리밍 완료 후 불릿 배열 자동 파싱 및 세션 캐시 연동 (`scratch/test_sprint7_streaming.mjs` 통과)
+
+### [Sprint 8] 오답 맞춤형 힌트 & 복습 가이드 동적 생성 (대기)
+- [ ] 틀린 문항 감지 시 Gemini 3.6 Flash 실시간 힌트/복습 가이드 API 라우트 (`/api/ai/quiz-hint`)
+- [ ] 오답 선택 시 "💡 왜 틀렸을까요? 맞춤 복습 힌트" 아코디언 UI 연동
+
+### [Sprint 9] 난이도 선택형 퀴즈 (기초 개념 ↔ 심화 응용) (대기)
+- [ ] 퀴즈 생성 API에 `difficulty: 'basic' | 'advanced'` 파라미터 및 프롬프트 분기
+- [ ] 상세 화면 상단 난이도 선택 칩 연동
+
+### [Sprint 10] 핵심 용어집(Glossary) 추출 & 호버 툴팁 (대기)
+- [ ] 목차별 핵심 전공 용어 3~5개 추출 API (`/api/ai/glossary`)
+- [ ] 요약 본문 내 주요 키워드 호버 툴팁 및 용어 사전 카드 렌더링
