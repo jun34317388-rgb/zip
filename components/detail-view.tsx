@@ -5,6 +5,7 @@ import { ArrowLeft, BookOpen, Check, Loader2, RotateCcw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { ErrorBox } from '@/components/error-box';
 import { ExceptionKey, GlossaryItem, OutlineItem, QuizDifficulty, QuizItem, View } from '@/lib/types';
+import { sanitizeBulletList } from '@/lib/utils/text-cleaner';
 
 interface DetailViewProps {
   outline: OutlineItem;
@@ -181,9 +182,10 @@ function SummarySection({
         .filter(Boolean)
     : [];
 
-  const displayBullets = summaries.length > 0 ? summaries : parsedStreamingBullets;
+  // 정제 유틸리티를 통한 노이즈 제거 및 구조화
+  const sanitizedItems = sanitizeBulletList(displayBullets);
 
-  if (loading && displayBullets.length === 0 && !isStreaming) {
+  if (loading && sanitizedItems.length === 0 && !isStreaming) {
     return (
       <div className="mt-8 flex flex-col gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -196,7 +198,7 @@ function SummarySection({
     );
   }
 
-  if (errorKey !== 'none' && displayBullets.length === 0) {
+  if (errorKey !== 'none' && sanitizedItems.length === 0) {
     return (
       <div className="mt-8">
         <ErrorBox errorKey={errorKey} retry={retry} />
@@ -214,47 +216,24 @@ function SummarySection({
       )}
 
       <ul className="flex flex-col gap-3.5">
-        {displayBullets.map((text, idx) => {
-          // 3-Tier 뱃지 파싱 (💡, ⚙️, ⚖️)
-          const isDefinition = text.includes('💡') || text.includes('[핵심 정의]');
-          const isMechanism = text.includes('⚙️') || text.includes('[동작 원리]');
-          const isTradeoff = text.includes('⚖️') || text.includes('[비교 및 주의점]') || text.includes('[비교]');
-
-          let badgeText = '';
-          let cleanContent = text;
-
-          if (isDefinition) {
-            badgeText = '핵심 정의';
-            cleanContent = text.replace(/^.*\[핵심 정의\]\s*/, '').replace(/^[💡\s]+/, '');
-          } else if (isMechanism) {
-            badgeText = '동작 메커니즘';
-            cleanContent = text.replace(/^.*\[동작 원리\]\s*/, '').replace(/^[⚙️\s]+/, '');
-          } else if (isTradeoff) {
-            badgeText = '비교 · 분석';
-            cleanContent = text.replace(/^.*\[(비교 및 주의점|비교)\]\s*/, '').replace(/^[⚖️\s]+/, '');
-          }
-
+        {sanitizedItems.map((item, idx) => {
           return (
             <li
               key={idx}
-              className="flex items-start gap-3.5 rounded-xl border border-border/70 bg-card p-4 text-sm leading-relaxed text-foreground sm:text-[15px] shadow-xs transition-all hover:border-primary/40"
+              className="flex items-start gap-3.5 rounded-xl border border-border/70 bg-card p-4 sm:p-4.5 text-sm leading-[1.75] text-foreground sm:text-[15px] shadow-xs transition-all hover:border-primary/40 break-keep"
             >
-              {badgeText ? (
+              {item.categoryLabel ? (
                 <span
-                  className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-bold mt-0.5 ${
-                    isDefinition
-                      ? 'bg-primary/10 text-primary border border-primary/20'
-                      : isMechanism
-                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
-                      : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
-                  }`}
+                  className={`shrink-0 rounded-md px-2.5 py-0.5 text-[11px] font-bold tracking-tight mt-0.5 select-none ${item.badgeClass}`}
                 >
-                  {badgeText}
+                  {item.categoryLabel}
                 </span>
               ) : (
-                <span className="mt-2 size-2 shrink-0 rounded-full bg-primary" />
+                <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-primary" />
               )}
-              <span className="flex-1 font-normal text-foreground/90">{cleanContent}</span>
+              <span className="flex-1 font-normal text-foreground/95 break-keep whitespace-normal">
+                {item.cleanText}
+              </span>
             </li>
           );
         })}
