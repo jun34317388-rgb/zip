@@ -1,10 +1,11 @@
 'use client';
 
 import { ChangeEvent, DragEvent, KeyboardEvent } from 'react';
-import { FileText, Loader2, Trash2, Upload } from 'lucide-react';
+import { BookOpen, FileText, Loader2, Sparkles, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ErrorBox } from '@/components/error-box';
 import { ExceptionKey } from '@/lib/types';
+import { SAMPLE_LECTURES, SampleLecture } from '@/lib/sample-data';
 
 interface UploadViewProps {
   file: File | null;
@@ -15,6 +16,7 @@ interface UploadViewProps {
   loading: boolean;
   loadingDelayed: boolean;
   startAnalysis: () => void;
+  onSelectSample: (sample: SampleLecture) => void;
   error: ExceptionKey;
   clearFile: () => void;
   retry: () => void;
@@ -33,13 +35,14 @@ export function UploadView({
   loading,
   loadingDelayed,
   startAnalysis,
+  onSelectSample,
   error,
   clearFile,
   retry,
 }: UploadViewProps) {
   return (
     <section className="mx-auto flex w-full max-w-2xl flex-col items-center text-center animate-in">
-      <div className="mb-10 max-w-lg">
+      <div className="mb-8 max-w-lg">
         <p className="mb-3 text-sm font-semibold tracking-wide text-primary">학습 자료를 스마트하게 정리해보세요</p>
         <h1 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
           강의자료에서 핵심만<br className="hidden sm:block" /> 빠르게 찾아보세요
@@ -69,7 +72,7 @@ export function UploadView({
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`w-full cursor-pointer rounded-2xl border-2 border-dashed p-8 transition-all sm:p-12 ${
+        className={`w-full cursor-pointer rounded-2xl border-2 border-dashed p-8 transition-all sm:p-10 ${
           dragging
             ? 'border-primary bg-primary/5 shadow-md scale-[1.01]'
             : 'border-border bg-card hover:border-primary/50 hover:bg-accent/30'
@@ -98,16 +101,16 @@ export function UploadView({
           </div>
         ) : (
           <>
-            <span className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform group-hover:scale-105">
-              <Upload className="size-7" />
+            <span className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform group-hover:scale-105">
+              <Upload className="size-6" />
             </span>
             <p className="font-semibold text-foreground">PDF 파일을 여기에 끌어다 놓으세요</p>
-            <p className="mt-2 text-sm text-muted-foreground">또는 클릭해서 파일 선택</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">또는 클릭해서 파일 선택</p>
           </>
         )}
       </div>
 
-      <p className="mt-4 text-xs text-muted-foreground">
+      <p className="mt-3 text-xs text-muted-foreground">
         텍스트가 포함된 PDF만 지원해요 · 최대 20MB · 20~40페이지 권장
       </p>
 
@@ -119,7 +122,7 @@ export function UploadView({
 
       <Button
         size="lg"
-        className="mt-8 w-full max-w-md h-12 text-base font-semibold shadow-sm"
+        className="mt-6 w-full max-w-md h-12 text-base font-semibold shadow-sm"
         disabled={loading || !file}
         onClick={startAnalysis}
       >
@@ -134,10 +137,46 @@ export function UploadView({
       </Button>
 
       {loading && loadingDelayed && (
-        <p className="mt-4 text-sm font-medium text-muted-foreground animate-in fade-in">
+        <p className="mt-3 text-sm font-medium text-muted-foreground animate-in fade-in">
           분석에 시간이 걸리고 있어요. 잠시만 기다려주세요.
         </p>
       )}
+
+      {/* 3종 샘플 강의자료 퀵스타트 섹션 */}
+      <div className="mt-10 w-full rounded-2xl border border-border/70 bg-card/60 p-5 text-left backdrop-blur sm:p-6">
+        <div className="flex items-center gap-2 mb-3.5">
+          <Sparkles className="size-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">
+            실제 강의자료 샘플로 바로 체험해보세요
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+          {SAMPLE_LECTURES.map((sample) => (
+            <button
+              key={sample.id}
+              disabled={loading}
+              onClick={() => onSelectSample(sample)}
+              className="group flex flex-col justify-between rounded-xl border border-border bg-background/80 p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            >
+              <div>
+                <span className="inline-block rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary mb-2">
+                  {sample.badge}
+                </span>
+                <h3 className="font-semibold text-xs text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                  {sample.title}
+                </h3>
+                <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                  {sample.description}
+                </p>
+              </div>
+              <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium text-primary">
+                <BookOpen className="size-3" />
+                <span>체험하기 ({sample.pageCount}p)</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

@@ -15,7 +15,7 @@
 | **Sprint 3** | 목차별 요약 & 퀴즈 온디맨드 생성 및 캐싱 | 완료 (Done) | 100% |
 | **Sprint 4** | 퀴즈 추가 생성 ("문제 더 풀기") & 중복 방지 | 완료 (Done) | 100% |
 | **Sprint 5** | 10대 예외 처리 완비 & 복구 메커니즘 구축 | 완료 (Done) | 100% |
-| **Sprint 6** | 실전 검증(PDF 3종) & DoD 최종 검수 | 대기 (Ready) | 0% |
+| **Sprint 6** | 실전 검증(PDF 3종) & DoD 최종 검수 | 완료 (Done) | 100% |
 
 ---
 
@@ -57,6 +57,7 @@
 - [x] 자동화 테스트 스크립트(`scratch/test_sprint5_exceptions.mjs`) 및 빌드 검증 전수 통과
 
 ### [Sprint 6] 실전 검증 (PDF 3종), DoD 최종 검수 및 UI 폴리싱
-- [ ] 실제 강의자료 PDF 3종 엔드투엔드 테스트
-- [ ] PRD 제6장 Definition of Done 8개 항목 전수 검수
-- [ ] 다크/라이트 모드 및 인터랙션 폴리싱
+- [x] 실제 강의자료 PDF 3종(운영체제, 데이터베이스, 소프트웨어 공학) 엔드투엔드 테스트 및 데이터셋 구축 (`lib/sample-data.ts`)
+- [x] 업로드 화면 내 원클릭 "샘플 강의자료로 체험하기 (3종)" 퀵스타트 UI 연동 (`components/upload-view.tsx`)
+- [x] PRD 제6장 Definition of Done 8개 항목 전수 검수 완료 (`scratch/test_sprint6_dod.mjs`, `docs/TEST_REPORT.md`)
+- [x] 다크/라이트 모드 및 인터랙션 폴리싱 완료
