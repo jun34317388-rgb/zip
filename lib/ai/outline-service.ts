@@ -89,6 +89,10 @@ export async function generateOutlinesWithAI(fullText: string): Promise<OutlineI
   const systemPrompt = `당신은 강의자료 PDF 분석 및 목차 구조화 전문가입니다.
 주어진 강의자료 전체 텍스트를 분석하여, 챕터/섹션 단위의 목차 목록과 각 목차에 해당하는 실제 원문 텍스트(contentSlice)를 추출하세요.
 
+[다국어 및 번역 규칙 (중요)]
+- 원문 텍스트가 영어(English) 또는 다국어로 작성된 경우에도, 목차 제목(title)은 학습자가 직관적으로 이해할 수 있는 자연스럽고 전문적인 '한국어(Korean)'로 번역 및 정리하여 생성하세요.
+- 전문 학술 용어는 '한국어 번역어 (영문 원어)' 형태로 병기해도 좋습니다 (예: "1. 프로세스 관리 및 CPU 스케줄링 (Process Management & CPU Scheduling)").
+
 [규칙]
 1. 원문에 없는 내용을 절대 지어내지 마세요.
 2. 각 목차의 contentSlice는 반드시 해당 목차 범위의 원문 텍스트를 그대로 포함해야 합니다.
@@ -97,7 +101,7 @@ export async function generateOutlinesWithAI(fullText: string): Promise<OutlineI
 {
   "outlines": [
     {
-      "title": "목차 제목 (예: 1. 데이터베이스 시스템 개요)",
+      "title": "한국어 목차 제목 (예: 1. 데이터베이스 시스템 개요 및 관계형 모델)",
       "contentSlice": "해당 목차의 실제 원문 텍스트 내용..."
     }
   ]
