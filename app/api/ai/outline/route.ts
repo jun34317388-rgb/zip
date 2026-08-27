@@ -5,7 +5,7 @@ import { ExceptionKey, PRD_ERROR_MESSAGES } from '@/lib/types';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { fullText } = body;
+    const { fullText, pageCount } = body;
 
     if (!fullText || typeof fullText !== 'string' || fullText.trim().length < 50) {
       const errorKey: ExceptionKey = 'NO_TEXT_EXTRACTED';
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const outlines = await generateOutlinesWithAI(fullText);
+    const outlines = await generateOutlinesWithAI(fullText, typeof pageCount === 'number' ? pageCount : 20);
 
     if (!outlines || outlines.length === 0) {
       const errorKey: ExceptionKey = 'NO_OUTLINE_FOUND';

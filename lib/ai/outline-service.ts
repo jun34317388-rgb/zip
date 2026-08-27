@@ -8,6 +8,9 @@ export const OutlineResponseSchema = z.object({
         title: z.string().min(1, '목차 제목이 비어 있습니다.'),
         topicTags: z.array(z.string()).optional().default([]),
         estimatedMinutes: z.number().optional().default(5),
+        pageStart: z.number().optional(),
+        pageEnd: z.number().optional(),
+        pageRange: z.string().optional(),
         contentSlice: z.string().min(1, '목차 본문이 비어 있습니다.'),
       })
     )
@@ -18,9 +21,8 @@ export type OutlineResponse = z.infer<typeof OutlineResponseSchema>;
 
 /**
  * 텍스트 패턴 기반 지능형 목차 추출 Fallback 파서
- * (LLM 키가 없거나 응답 파싱 실패 시 원문 텍스트를 구조화하여 무중단 보장)
  */
-export function extractOutlinesWithRuleEngine(fullText: string): OutlineItem[] {
+export function extractOutlinesWithRuleEngine(fullText: string, totalPages = 20): OutlineItem[] {
   const lines = fullText.split('\n').map((l) => l.trim()).filter(Boolean);
   const headingRegex = /^(?:제\s*\d+\s*[장절편]|Chapter\s*\d+|Section\s*\d+|\d+\.\s+|[I|V|X]+\.\s+|[가-힣A-Za-z0-9\s]{2,20}:)/i;
 
@@ -51,11 +53,14 @@ export function extractOutlinesWithRuleEngine(fullText: string): OutlineItem[] {
     sections.push({ title: currentTitle, contents: currentContents });
   }
 
-  // 감지된 섹션이 1개 이하일 경우 단락 균등 분할로 3~5개 챕터 생성
+  const count = Math.max(sections.length, 1);
+  const pagesPerSec = Math.max(1, Math.round(totalPages / count));
+
   if (sections.length < 2) {
     const paragraphs = fullText.split(/\n\s*\n/).filter((p) => p.trim().length > 30);
     const chunkCount = Math.min(Math.max(3, Math.ceil(paragraphs.length / 3)), 8);
     const chunkSize = Math.ceil(paragraphs.length / chunkCount);
+    const pChunk = Math.max(1, Math.round(totalPages / chunkCount));
 
     const fallbackSections: OutlineItem[] = [];
     for (let i = 0; i < chunkCount; i++) {
@@ -64,12 +69,18 @@ export function extractOutlinesWithRuleEngine(fullText: string): OutlineItem[] {
       const firstLine = chunk[0].split('\n')[0].replace(/^[#\s*]+/, '').trim();
       const title = firstLine.length > 30 ? firstLine.slice(0, 27) + '...' : firstLine || `제 ${i + 1}장`;
       const sliceText = chunk.join('\n\n');
+      const pStart = i * pChunk + 1;
+      const pEnd = i === chunkCount - 1 ? totalPages : Math.min(totalPages, (i + 1) * pChunk);
+
       fallbackSections.push({
         id: `outline-${i + 1}`,
         order: i + 1,
         title,
         topicTags: extractQuickTags(sliceText, title),
         estimatedMinutes: Math.max(3, Math.ceil(sliceText.length / 400)),
+        pageStart: pStart,
+        pageEnd: pEnd,
+        pageRange: `p. ${pStart} ~ ${pEnd}`,
         contentSlice: sliceText,
       });
     }
@@ -78,12 +89,17 @@ export function extractOutlinesWithRuleEngine(fullText: string): OutlineItem[] {
 
   return sections.map((sec, idx) => {
     const sliceText = sec.contents.join('\n');
+    const pStart = idx * pagesPerSec + 1;
+    const pEnd = idx === sections.length - 1 ? totalPages : Math.min(totalPages, (idx + 1) * pagesPerSec);
     return {
       id: `outline-${idx + 1}`,
       order: idx + 1,
       title: sec.title,
       topicTags: extractQuickTags(sliceText, sec.title),
       estimatedMinutes: Math.max(3, Math.ceil(sliceText.length / 400)),
+      pageStart: pStart,
+      pageEnd: pEnd,
+      pageRange: `p. ${pStart} ~ ${pEnd}`,
       contentSlice: sliceText,
     };
   });
@@ -104,9 +120,9 @@ function extractQuickTags(text: string, title: string): string[] {
 }
 
 /**
- * Gemini / OpenAI LLM 호출을 통한 목차 자동 구조화 및 토픽 태그 추출
+ * Gemini / OpenAI LLM 호출을 통한 목차 자동 구조화, 토픽 태그 및 페이지 범위 산출
  */
-export async function generateOutlinesWithAI(fullText: string): Promise<OutlineItem[]> {
+export async function generateOutlinesWithAI(fullText: string, totalPages = 20): Promise<OutlineItem[]> {
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   const openaiApiKey = process.env.OPENAI_API_KEY;
 
@@ -158,15 +174,24 @@ export async function generateOutlinesWithAI(fullText: string): Promise<OutlineI
 
       const parsed = JSON.parse(rawJson);
       const validated = OutlineResponseSchema.parse(parsed);
+      const totalCount = validated.outlines.length;
+      const pagesPerCh = Math.max(1, Math.round(totalPages / totalCount));
 
-      return validated.outlines.map((item, idx) => ({
-        id: `outline-${idx + 1}`,
-        order: idx + 1,
-        title: item.title,
-        topicTags: item.topicTags && item.topicTags.length > 0 ? item.topicTags : extractQuickTags(item.contentSlice, item.title),
-        estimatedMinutes: item.estimatedMinutes || Math.max(3, Math.ceil(item.contentSlice.length / 400)),
-        contentSlice: item.contentSlice,
-      }));
+      return validated.outlines.map((item, idx) => {
+        const pStart = idx * pagesPerCh + 1;
+        const pEnd = idx === totalCount - 1 ? totalPages : Math.min(totalPages, (idx + 1) * pagesPerCh);
+        return {
+          id: `outline-${idx + 1}`,
+          order: idx + 1,
+          title: item.title,
+          topicTags: item.topicTags && item.topicTags.length > 0 ? item.topicTags : extractQuickTags(item.contentSlice, item.title),
+          estimatedMinutes: item.estimatedMinutes || Math.max(3, Math.ceil(item.contentSlice.length / 400)),
+          pageStart: pStart,
+          pageEnd: pEnd,
+          pageRange: `p. ${pStart} ~ ${pEnd}`,
+          contentSlice: item.contentSlice,
+        };
+      });
     } catch (e) {
       console.warn('Gemini LLM call failed, falling back to rule engine:', e);
     }
@@ -198,22 +223,31 @@ export async function generateOutlinesWithAI(fullText: string): Promise<OutlineI
 
       const parsed = JSON.parse(content);
       const validated = OutlineResponseSchema.parse(parsed);
+      const totalCount = validated.outlines.length;
+      const pagesPerCh = Math.max(1, Math.round(totalPages / totalCount));
 
-      return validated.outlines.map((item, idx) => ({
-        id: `outline-${idx + 1}`,
-        order: idx + 1,
-        title: item.title,
-        topicTags: item.topicTags && item.topicTags.length > 0 ? item.topicTags : extractQuickTags(item.contentSlice, item.title),
-        estimatedMinutes: item.estimatedMinutes || Math.max(3, Math.ceil(item.contentSlice.length / 400)),
-        contentSlice: item.contentSlice,
-      }));
+      return validated.outlines.map((item, idx) => {
+        const pStart = idx * pagesPerCh + 1;
+        const pEnd = idx === totalCount - 1 ? totalPages : Math.min(totalPages, (idx + 1) * pagesPerCh);
+        return {
+          id: `outline-${idx + 1}`,
+          order: idx + 1,
+          title: item.title,
+          topicTags: item.topicTags && item.topicTags.length > 0 ? item.topicTags : extractQuickTags(item.contentSlice, item.title),
+          estimatedMinutes: item.estimatedMinutes || Math.max(3, Math.ceil(item.contentSlice.length / 400)),
+          pageStart: pStart,
+          pageEnd: pEnd,
+          pageRange: `p. ${pStart} ~ ${pEnd}`,
+          contentSlice: item.contentSlice,
+        };
+      });
     } catch (e) {
       console.warn('OpenAI LLM call failed, falling back to rule engine:', e);
     }
   }
 
   // API 키가 없거나 LLM 실패 시 고도화된 Fallback 규칙 엔진 실행
-  const ruleOutlines = extractOutlinesWithRuleEngine(fullText);
+  const ruleOutlines = extractOutlinesWithRuleEngine(fullText, totalPages);
   if (ruleOutlines.length === 0) {
     throw new Error('NO_OUTLINE_FOUND');
   }

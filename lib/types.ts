@@ -47,6 +47,9 @@ export interface OutlineItem {
   title: string;
   topicTags?: string[];
   estimatedMinutes?: number;
+  pageStart?: number;
+  pageEnd?: number;
+  pageRange?: string;
   contentSlice: string;
 }
 

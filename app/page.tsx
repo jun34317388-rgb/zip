@@ -100,15 +100,15 @@ export default function Page() {
   };
 
   // 분석 실행 파이프라인 (추출 데이터 기반 공통 실행)
-  const runAnalysis = async (text: string, fileName: string) => {
+  const runAnalysis = async (text: string, fileName: string, pageCount?: number) => {
     setLoading(true);
     setLoadingDelayed(false);
     setUploadError('none');
 
     try {
-      const res = await fetchWithRetry<{ outlines: OutlineItem[] }>(
+      const res = await fetchWithRetry<{ success: boolean; outlines: OutlineItem[] }>(
         '/api/ai/outline',
-        { fullText: text, fileName },
+        { fullText: text, fileName, pageCount },
         {
           timeoutMs: 35000,
           delayWarningMs: 3000,
@@ -161,7 +161,7 @@ export default function Page() {
 
       const extracted = outcome.data!;
       setPdfData(extracted);
-      await runAnalysis(extracted.fullText, file.name);
+      await runAnalysis(extracted.fullText, file.name, extracted.pageCount);
     } catch (err: any) {
       setUploadError('CORRUPTED_PDF');
       setLoading(false);
@@ -181,7 +181,7 @@ export default function Page() {
     };
     setPdfData(fakeData);
     setFile(new File([sample.fullText], sample.fileName, { type: 'application/pdf' }));
-    runAnalysis(sample.fullText, sample.fileName);
+    runAnalysis(sample.fullText, sample.fileName, sample.pageCount);
   };
 
   // SSE 실시간 스트리밍 요약 로드 (Sprint 7 고도화)

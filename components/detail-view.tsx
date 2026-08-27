@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Check, Loader2, RotateCcw, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Check, Loader2, RotateCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ErrorBox } from '@/components/error-box';
 import { ExceptionKey, GlossaryItem, OutlineItem, QuizDifficulty, QuizItem, View } from '@/lib/types';
@@ -63,12 +63,39 @@ export function DetailView({
         목록으로 돌아가기
       </Button>
 
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">
-        목차 {outline.order}
-      </p>
-      <h1 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <span className="text-xs font-bold uppercase tracking-wider text-primary">
+          Chapter {outline.order}
+        </span>
+        {outline.pageRange && (
+          <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-semibold text-primary">
+            <BookOpen className="size-3" />
+            <span>{outline.pageRange}</span>
+          </span>
+        )}
+        {outline.estimatedMinutes && (
+          <span className="text-[11px] font-medium text-muted-foreground">
+            • 약 {outline.estimatedMinutes}분 학습
+          </span>
+        )}
+      </div>
+
+      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground leading-snug break-keep">
         {outline.title}
       </h1>
+
+      {outline.topicTags && outline.topicTags.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap mt-3">
+          {outline.topicTags.map((tag, idx) => (
+            <span
+              key={idx}
+              className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="mt-8 grid grid-cols-2 rounded-xl border border-border bg-muted p-1">
         <button
