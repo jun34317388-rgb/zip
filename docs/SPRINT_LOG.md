@@ -17,7 +17,7 @@
 | **Sprint 5** | 10대 예외 처리 완비 & 복구 메커니즘 구축 | 완료 (Done) | 100% |
 | **Sprint 6** | 실전 검증(PDF 3종) & DoD 최종 검수 | 완료 (Done) | 100% |
 | **Sprint 7** | [고도화] SSE 실시간 요약 스트리밍 & 체감 지연 단축 | 완료 (Done) | 100% |
-| **Sprint 8** | [고도화] 오답 맞춤형 힌트 & 복습 가이드 생성 | 대기 (Ready) | 0% |
+| **Sprint 8** | [고도화] 오답 맞춤형 힌트 & 복습 가이드 생성 | 완료 (Done) | 100% |
 | **Sprint 9** | [고도화] 난이도 선택형 퀴즈 (기초 ↔ 심화) | 대기 (Ready) | 0% |
 | **Sprint 10** | [고도화] 핵심 용어집(Glossary) 추출 & 호버 툴팁 | 대기 (Ready) | 0% |
 
@@ -72,9 +72,10 @@
 - [x] `DetailView` 및 `app/page.tsx` 실시간 스트리밍 타이핑 렌더러 연동 (체감 지연 0.5s 단축)
 - [x] 스트리밍 완료 후 불릿 배열 자동 파싱 및 세션 캐시 연동 (`scratch/test_sprint7_streaming.mjs` 통과)
 
-### [Sprint 8] 오답 맞춤형 힌트 & 복습 가이드 동적 생성 (대기)
-- [ ] 틀린 문항 감지 시 Gemini 3.6 Flash 실시간 힌트/복습 가이드 API 라우트 (`/api/ai/quiz-hint`)
-- [ ] 오답 선택 시 "💡 왜 틀렸을까요? 맞춤 복습 힌트" 아코디언 UI 연동
+### [Sprint 8] 오답 맞춤형 힌트 & 복습 가이드 동적 생성 (완료)
+- [x] 틀린 문항 감지 시 Gemini 3.6 Flash 실시간 힌트/복습 가이드 API 라우트 (`/api/ai/quiz-hint/route.ts`)
+- [x] 오답 선택 시 "💡 왜 틀렸을까요? 맞춤 복습 힌트" 아코디언 UI 및 실시간 분석 카드 연동
+- [x] `scratch/test_sprint8_hint.mjs` 자동화 검증 스위트 통과
 
 ### [Sprint 9] 난이도 선택형 퀴즈 (기초 개념 ↔ 심화 응용) (대기)
 - [ ] 퀴즈 생성 API에 `difficulty: 'basic' | 'advanced'` 파라미터 및 프롬프트 분기

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { ArrowLeft, Check, Loader2, RotateCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ErrorBox } from '@/components/error-box';
@@ -111,6 +112,8 @@ export function DetailView({
           errorKey={detailError}
           addMore={addMore}
           retry={retry}
+          contentSlice={outline.contentSlice}
+          title={outline.title}
         />
       )}
     </section>
@@ -199,6 +202,8 @@ function QuizSection({
   errorKey,
   addMore,
   retry,
+  contentSlice,
+  title,
 }: {
   quizzes: QuizItem[];
   answers: Record<number, number>;
@@ -210,6 +215,8 @@ function QuizSection({
   errorKey: ExceptionKey;
   addMore: () => void;
   retry: () => void;
+  contentSlice?: string;
+  title?: string;
 }) {
   if (loading && quizzes.length === 0) {
     return (
@@ -262,6 +269,8 @@ function QuizSection({
             index={q}
             selected={answers[q]}
             onAnswer={(o) => answer(q, o)}
+            contentSlice={contentSlice}
+            title={title}
           />
         ))}
 
@@ -299,12 +308,53 @@ function QuizCard({
   index,
   selected,
   onAnswer,
+  contentSlice = '',
+  title = '',
 }: {
   quiz: QuizItem;
   index: number;
   selected?: number;
   onAnswer: (o: number) => void;
+  contentSlice?: string;
+  title?: string;
 }) {
+  const [hintOpen, setHintOpen] = useState(false);
+  const [hintLoading, setHintLoading] = useState(false);
+  const [hintData, setHintData] = useState<{
+    whyWrong: string;
+    reviewGuide: string;
+    keyPoint: string;
+  } | null>(null);
+
+  const isWrong = selected !== undefined && selected !== quiz.answer;
+
+  const fetchHint = async () => {
+    if (hintData || hintLoading || selected === undefined) return;
+    setHintLoading(true);
+    try {
+      const res = await fetch('/api/ai/quiz-hint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: quiz.question,
+          options: quiz.options,
+          selectedOption: selected,
+          answer: quiz.answer,
+          contentSlice,
+          title,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.hint) {
+        setHintData(data.hint);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setHintLoading(false);
+    }
+  };
+
   return (
     <article className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6 transition-all">
       <p className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">
@@ -316,8 +366,8 @@ function QuizCard({
       <div className="mt-5 flex flex-col gap-2.5">
         {quiz.options.map((option, i) => {
           const chosen = selected === i;
-          const isAnswer = selected !== undefined && i === quiz.answer;
-          const isWrong = chosen && !isAnswer;
+          const isAns = selected !== undefined && i === quiz.answer;
+          const isWr = chosen && !isAns;
 
           return (
             <button
@@ -325,23 +375,25 @@ function QuizCard({
               disabled={selected !== undefined}
               onClick={() => onAnswer(i)}
               className={`flex items-center gap-3.5 rounded-lg border px-4 py-3 text-left text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default ${
-                isAnswer
+                isAns
                   ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-medium'
-                  : isWrong
+                  : isWr
                   ? 'border-destructive/60 bg-destructive/10 text-destructive font-medium'
                   : 'border-border bg-background hover:border-primary/50 hover:bg-accent/40 text-foreground'
               }`}
             >
-              <span className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
-                isAnswer
-                  ? 'border-emerald-500 bg-emerald-500 text-white'
-                  : isWrong
-                  ? 'border-destructive bg-destructive text-white'
-                  : 'border-muted-foreground/40 text-muted-foreground'
-              }`}>
-                {isAnswer ? (
+              <span
+                className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
+                  isAns
+                    ? 'border-emerald-500 bg-emerald-500 text-white'
+                    : isWr
+                    ? 'border-destructive bg-destructive text-white'
+                    : 'border-muted-foreground/40 text-muted-foreground'
+                }`}
+              >
+                {isAns ? (
                   <Check className="size-3.5 stroke-[3]" />
-                ) : isWrong ? (
+                ) : isWr ? (
                   <X className="size-3.5 stroke-[3]" />
                 ) : (
                   String.fromCharCode(65 + i)
@@ -352,10 +404,50 @@ function QuizCard({
           );
         })}
       </div>
+
       {selected !== undefined && (
         <div className="mt-4 rounded-lg border border-border/80 bg-muted/60 p-4 text-xs leading-5 text-muted-foreground">
-          <p className="font-semibold text-foreground mb-1">💡 해설</p>
+          <p className="font-semibold text-foreground mb-1">💡 정답 해설</p>
           <p>{quiz.explanation}</p>
+
+          {/* Sprint 8 오답 맞춤형 힌트 섹션 */}
+          {isWrong && (
+            <div className="mt-3 pt-3 border-t border-border/70">
+              {!hintOpen ? (
+                <button
+                  onClick={() => {
+                    setHintOpen(true);
+                    fetchHint();
+                  }}
+                  className="flex items-center gap-1.5 text-primary font-semibold hover:underline"
+                >
+                  <span>🧠 AI 맞춤 오답 분석 & 복습 가이드 보기</span>
+                </button>
+              ) : (
+                <div className="mt-2 rounded-md bg-background/80 p-3 border border-primary/20 animate-in fade-in">
+                  <p className="font-semibold text-primary mb-1.5 flex items-center gap-1.5">
+                    <span>🔍 AI 오답 분석</span>
+                    {hintLoading && <Loader2 className="size-3 animate-spin text-primary" />}
+                  </p>
+                  {hintLoading ? (
+                    <p className="text-[11px] text-muted-foreground">오답 원인을 분석하고 있습니다...</p>
+                  ) : hintData ? (
+                    <div className="flex flex-col gap-1.5 text-[11px] leading-relaxed text-foreground">
+                      <p>
+                        <strong>• 오답 원인:</strong> {hintData.whyWrong}
+                      </p>
+                      <p>
+                        <strong>• 복습 포인트:</strong> {hintData.reviewGuide}
+                      </p>
+                      <p className="text-primary font-medium">
+                        <strong>• 핵심 요약:</strong> {hintData.keyPoint}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </article>
