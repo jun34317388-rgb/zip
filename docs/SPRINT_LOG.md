@@ -18,7 +18,7 @@
 | **Sprint 6** | 실전 검증(PDF 3종) & DoD 최종 검수 | 완료 (Done) | 100% |
 | **Sprint 7** | [고도화] SSE 실시간 요약 스트리밍 & 체감 지연 단축 | 완료 (Done) | 100% |
 | **Sprint 8** | [고도화] 오답 맞춤형 힌트 & 복습 가이드 생성 | 완료 (Done) | 100% |
-| **Sprint 9** | [고도화] 난이도 선택형 퀴즈 (기초 ↔ 심화) | 대기 (Ready) | 0% |
+| **Sprint 9** | [고도화] 난이도 선택형 퀴즈 (기초 ↔ 심화) | 완료 (Done) | 100% |
 | **Sprint 10** | [고도화] 핵심 용어집(Glossary) 추출 & 호버 툴팁 | 대기 (Ready) | 0% |
 
 ---
@@ -77,9 +77,10 @@
 - [x] 오답 선택 시 "💡 왜 틀렸을까요? 맞춤 복습 힌트" 아코디언 UI 및 실시간 분석 카드 연동
 - [x] `scratch/test_sprint8_hint.mjs` 자동화 검증 스위트 통과
 
-### [Sprint 9] 난이도 선택형 퀴즈 (기초 개념 ↔ 심화 응용) (대기)
-- [ ] 퀴즈 생성 API에 `difficulty: 'basic' | 'advanced'` 파라미터 및 프롬프트 분기
-- [ ] 상세 화면 상단 난이도 선택 칩 연동
+### [Sprint 9] 난이도 선택형 퀴즈 (기초 개념 ↔ 심화 응용) (완료)
+- [x] 퀴즈 생성 API에 `difficulty: 'basic' | 'advanced'` 파라미터 및 프롬프트 분기 (`lib/ai/quiz-service.ts`)
+- [x] 상세 화면 상단 난이도 선택 칩 (`[🌱 기초 개념]` ↔ `[🔥 심화 응용]`) 및 난이도별 캐싱 분리 연동
+- [x] `scratch/test_sprint9_difficulty.mjs` 자동화 검증 통과
 
 ### [Sprint 10] 핵심 용어집(Glossary) 추출 & 호버 툴팁 (대기)
 - [ ] 목차별 핵심 전공 용어 3~5개 추출 API (`/api/ai/glossary`)

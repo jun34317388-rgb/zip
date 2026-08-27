@@ -48,16 +48,22 @@ export interface OutlineItem {
   contentSlice: string;
 }
 
+export type QuizDifficulty = 'basic' | 'advanced';
+
 export interface QuizItem {
   id: string;
   question: string;
   options: string[];
   answer: number;
   explanation: string;
+  difficulty?: QuizDifficulty;
 }
 
 export interface TopicDetailCache {
   summary?: string[];
   quizzes: QuizItem[];
   userAnswers: Record<number, number>;
+  advancedQuizzes?: QuizItem[];
+  advancedAnswers?: Record<number, number>;
 }
+

@@ -10,6 +10,8 @@ interface DetailViewProps {
   outline: OutlineItem;
   tab: 'summary' | 'quiz';
   setTab: (v: 'summary' | 'quiz') => void;
+  difficulty: QuizDifficulty;
+  setDifficulty: (d: QuizDifficulty) => void;
   setView: (v: View) => void;
   detailError: ExceptionKey;
   setDetailError: (v: ExceptionKey) => void;
@@ -30,6 +32,8 @@ export function DetailView({
   outline,
   tab,
   setTab,
+  difficulty,
+  setDifficulty,
   setView,
   detailError,
   loading,
@@ -114,6 +118,8 @@ export function DetailView({
           retry={retry}
           contentSlice={outline.contentSlice}
           title={outline.title}
+          difficulty={difficulty}
+          setDifficulty={setDifficulty}
         />
       )}
     </section>
@@ -204,6 +210,8 @@ function QuizSection({
   retry,
   contentSlice,
   title,
+  difficulty,
+  setDifficulty,
 }: {
   quizzes: QuizItem[];
   answers: Record<number, number>;
@@ -217,43 +225,70 @@ function QuizSection({
   retry: () => void;
   contentSlice?: string;
   title?: string;
+  difficulty: QuizDifficulty;
+  setDifficulty: (d: QuizDifficulty) => void;
 }) {
-  if (loading && quizzes.length === 0) {
-    return (
-      <div className="mt-8 flex flex-col gap-6">
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-border bg-card p-6">
-            <div className="mb-4 h-5 w-24 animate-pulse rounded bg-muted" />
-            <div className="mb-6 h-6 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="flex flex-col gap-3">
-              <SkeletonLine wide />
-              <SkeletonLine wide />
-              <SkeletonLine wide />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="mt-7">
-      {quizzes.length > 0 && (
-        <div className="mb-7">
-          <div className="mb-2 flex justify-between text-sm">
-            <span className="font-medium text-foreground">진행도</span>
-            <span className="text-muted-foreground font-semibold">
-              {completed} / {quizzes.length} 문항 완료
-            </span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
-              style={{ width: `${(completed / quizzes.length) * 100}%` }}
-            />
-          </div>
+      {/* 난이도 선택 칩 */}
+      <div className="mb-6 flex items-center justify-between gap-3 bg-muted/60 p-1.5 rounded-xl border border-border/70">
+        <span className="text-xs font-semibold text-muted-foreground ml-2">난이도 설정</span>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => setDifficulty('basic')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              difficulty === 'basic'
+                ? 'bg-background text-primary shadow-sm border border-border'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            🌱 기초 개념 확인
+          </button>
+          <button
+            onClick={() => setDifficulty('advanced')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              difficulty === 'advanced'
+                ? 'bg-background text-primary shadow-sm border border-border'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            🔥 심화 응용 실전
+          </button>
         </div>
-      )}
+      </div>
+
+      {loading && quizzes.length === 0 ? (
+        <div className="flex flex-col gap-6">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-6">
+              <div className="mb-4 h-5 w-24 animate-pulse rounded bg-muted" />
+              <div className="mb-6 h-6 w-3/4 animate-pulse rounded bg-muted" />
+              <div className="flex flex-col gap-3">
+                <SkeletonLine wide />
+                <SkeletonLine wide />
+                <SkeletonLine wide />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          {quizzes.length > 0 && (
+            <div className="mb-7">
+              <div className="mb-2 flex justify-between text-sm">
+                <span className="font-medium text-foreground">진행도</span>
+                <span className="text-muted-foreground font-semibold">
+                  {completed} / {quizzes.length} 문항 완료
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
+                  style={{ width: `${(completed / quizzes.length) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
 
       {errorKey !== 'none' && (
         <div className="mb-6">
@@ -298,6 +333,8 @@ function QuizSection({
           <Loader2 className="mr-2 size-4 animate-spin" />
           새 문제를 만들고 있어요...
         </Button>
+      )}
+        </>
       )}
     </div>
   );

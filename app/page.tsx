@@ -38,6 +38,7 @@ export default function Page() {
   const [detailError, setDetailError] = useState<ExceptionKey>('none');
   const [dark, setDark] = useState(true);
   const [tab, setTab] = useState<'summary' | 'quiz'>('summary');
+  const [difficulty, setDifficulty] = useState<QuizDifficulty>('basic');
   const [adding, setAdding] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
 
@@ -270,9 +271,11 @@ export default function Page() {
     }
   };
 
-  // 온디맨드 퀴즈 로드 (캐시 우선 & 공통 재시도)
-  const loadQuizForOutline = async (outline: OutlineItem) => {
-    const existing = cache[outline.id]?.quizzes;
+  // 온디맨드 퀴즈 로드 (캐시 우선 & 공통 재시도 & 난이도 분기)
+  const loadQuizForOutline = async (outline: OutlineItem, targetDifficulty: QuizDifficulty = difficulty) => {
+    const isAdv = targetDifficulty === 'advanced';
+    const existing = isAdv ? cache[outline.id]?.advancedQuizzes : cache[outline.id]?.quizzes;
+
     if (existing && existing.length > 0) {
       setDetailError('none');
       return;
@@ -284,7 +287,11 @@ export default function Page() {
     try {
       const res = await fetchWithRetry<{ quizzes: any[] }>(
         '/api/ai/quiz',
-        { contentSlice: outline.contentSlice, title: outline.title },
+        {
+          contentSlice: outline.contentSlice,
+          title: outline.title,
+          difficulty: targetDifficulty,
+        },
         {
           timeoutMs: 25000,
           errorKeyFallback: 'AI_FAILED_QUIZ',
@@ -296,13 +303,18 @@ export default function Page() {
         throw new AppApiError('AI_FAILED_QUIZ');
       }
 
-      setCache((prev) => ({
-        ...prev,
-        [outline.id]: {
-          ...(prev[outline.id] || { quizzes: [], userAnswers: {} }),
-          quizzes: res.quizzes,
-        },
-      }));
+      setCache((prev) => {
+        const topic = prev[outline.id] || { quizzes: [], userAnswers: {} };
+        return {
+          ...prev,
+          [outline.id]: {
+            ...topic,
+            ...(isAdv
+              ? { advancedQuizzes: res.quizzes, advancedAnswers: topic.advancedAnswers || {} }
+              : { quizzes: res.quizzes, userAnswers: topic.userAnswers || {} }),
+          },
+        };
+      });
       setContentLoading(false);
     } catch (err: any) {
       console.error('Quiz load error:', err);
@@ -322,36 +334,57 @@ export default function Page() {
       if (tab === 'summary') {
         loadSummaryForOutline(selectedOutline);
       } else if (tab === 'quiz') {
-        loadQuizForOutline(selectedOutline);
+        loadQuizForOutline(selectedOutline, difficulty);
       }
     }
-  }, [view, selectedOutline, tab]);
+  }, [view, selectedOutline, tab, difficulty]);
 
   const answerQuiz = (qIndex: number, optionIndex: number) => {
     if (!selectedOutline) return;
+    const isAdv = difficulty === 'advanced';
+
     setCache((prev) => {
       const currentTopic = prev[selectedOutline.id] || { quizzes: [], userAnswers: {} };
-      if (currentTopic.userAnswers[qIndex] !== undefined) return prev;
-      return {
-        ...prev,
-        [selectedOutline.id]: {
-          ...currentTopic,
-          userAnswers: {
-            ...currentTopic.userAnswers,
-            [qIndex]: optionIndex,
+      if (isAdv) {
+        const currentAnswers = currentTopic.advancedAnswers || {};
+        if (currentAnswers[qIndex] !== undefined) return prev;
+        return {
+          ...prev,
+          [selectedOutline.id]: {
+            ...currentTopic,
+            advancedAnswers: {
+              ...currentAnswers,
+              [qIndex]: optionIndex,
+            },
           },
-        },
-      };
+        };
+      } else {
+        const currentAnswers = currentTopic.userAnswers || {};
+        if (currentAnswers[qIndex] !== undefined) return prev;
+        return {
+          ...prev,
+          [selectedOutline.id]: {
+            ...currentTopic,
+            userAnswers: {
+              ...currentAnswers,
+              [qIndex]: optionIndex,
+            },
+          },
+        };
+      }
     });
   };
 
-  // 문제 더 풀기 (5.8 중복 방지 및 기존 풀이 상태 100% 보존 머지)
+  // 문제 더 풀기 (5.8 중복 방지 및 기존 풀이 상태 100% 보존 머지 & 난이도 반영)
   const addMore = async () => {
     if (!selectedOutline) return;
     setAdding(true);
     setDetailError('none');
 
-    const currentQuizzes = cache[selectedOutline.id]?.quizzes || [];
+    const isAdv = difficulty === 'advanced';
+    const currentQuizzes = isAdv
+      ? cache[selectedOutline.id]?.advancedQuizzes || []
+      : cache[selectedOutline.id]?.quizzes || [];
     const existingQuestions = currentQuizzes.map((q) => q.question);
 
     try {
@@ -361,6 +394,7 @@ export default function Page() {
           contentSlice: selectedOutline.contentSlice,
           title: selectedOutline.title,
           existingQuestions,
+          difficulty,
         },
         {
           timeoutMs: 25000,
@@ -379,7 +413,9 @@ export default function Page() {
           ...prev,
           [selectedOutline.id]: {
             ...topic,
-            quizzes: [...topic.quizzes, ...res.quizzes],
+            ...(isAdv
+              ? { advancedQuizzes: [...(topic.advancedQuizzes || []), ...res.quizzes] }
+              : { quizzes: [...topic.quizzes, ...res.quizzes] }),
           },
         };
       });
@@ -412,8 +448,14 @@ export default function Page() {
   const fileLabel = pdfData?.fileName ?? file?.name ?? '강의자료.pdf';
   const currentTopicCache = selectedOutline ? cache[selectedOutline.id] : undefined;
   const currentSummaries = currentTopicCache?.summary || [];
-  const currentQuizzes = currentTopicCache?.quizzes || [];
-  const currentAnswers = currentTopicCache?.userAnswers || {};
+  const currentQuizzes =
+    difficulty === 'advanced'
+      ? currentTopicCache?.advancedQuizzes || []
+      : currentTopicCache?.quizzes || [];
+  const currentAnswers =
+    difficulty === 'advanced'
+      ? currentTopicCache?.advancedAnswers || {}
+      : currentTopicCache?.userAnswers || {};
   const completed = Object.keys(currentAnswers).length;
 
   const simulatedError =
@@ -486,6 +528,8 @@ export default function Page() {
             outline={selectedOutline}
             tab={tab}
             setTab={setTab}
+            difficulty={difficulty}
+            setDifficulty={setDifficulty}
             setView={setView}
             detailError={detailError}
             setDetailError={setDetailError}
@@ -502,7 +546,7 @@ export default function Page() {
             retry={() => {
               if (tab === 'summary') loadSummaryForOutline(selectedOutline);
               else if (detailError === 'QUIZ_MORE_FAILED') addMore();
-              else loadQuizForOutline(selectedOutline);
+              else loadQuizForOutline(selectedOutline, difficulty);
             }}
           />
         )}
