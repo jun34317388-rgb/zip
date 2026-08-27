@@ -72,14 +72,14 @@ export function UploadView({
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`w-full cursor-pointer rounded-2xl border-2 border-dashed p-8 transition-all sm:p-10 ${
+        className={`w-full cursor-pointer rounded-lg border-2 border-dashed p-8 transition-all sm:p-10 ${
           dragging
-            ? 'border-primary bg-primary/5 shadow-md scale-[1.01]'
+            ? 'border-primary bg-primary/5 shadow-sm scale-[1.01]'
             : 'border-border bg-card hover:border-primary/50 hover:bg-accent/30'
         } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
       >
         {file ? (
-          <div className="mx-auto flex max-w-md items-center gap-4 rounded-xl border border-border bg-background p-4 text-left shadow-sm">
+          <div className="mx-auto flex max-w-md items-center gap-4 rounded-lg border border-border bg-background p-4 text-left shadow-xs">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <FileText className="size-6" />
             </span>
@@ -90,6 +90,7 @@ export function UploadView({
             <Button
               variant="ghost"
               size="icon"
+              className="rounded-lg"
               aria-label="선택한 파일 삭제"
               onClick={(e) => {
                 e.stopPropagation();
@@ -101,7 +102,7 @@ export function UploadView({
           </div>
         ) : (
           <>
-            <span className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform group-hover:scale-105">
+            <span className="mx-auto mb-4 flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform group-hover:scale-105">
               <Upload className="size-6" />
             </span>
             <p className="font-semibold text-foreground">PDF 파일을 여기에 끌어다 놓으세요</p>
@@ -122,7 +123,7 @@ export function UploadView({
 
       <Button
         size="lg"
-        className="mt-6 w-full max-w-md h-12 text-base font-semibold shadow-sm"
+        className="mt-6 w-full max-w-md h-12 text-base font-semibold shadow-xs rounded-lg active:scale-[0.98] transition-all"
         disabled={loading || !file}
         onClick={startAnalysis}
       >
@@ -143,10 +144,10 @@ export function UploadView({
       )}
 
       {/* 3종 샘플 강의자료 퀵스타트 섹션 */}
-      <div className="mt-10 w-full rounded-2xl border border-border/70 bg-card/60 p-5 text-left backdrop-blur sm:p-6">
+      <div className="mt-10 w-full rounded-lg border border-border/80 bg-card/70 p-5 text-left backdrop-blur sm:p-6 shadow-xs">
         <div className="flex items-center gap-2 mb-3.5">
           <Sparkles className="size-4 text-primary" />
-          <h2 className="text-sm font-semibold text-foreground">
+          <h2 className="text-sm font-bold text-foreground">
             실제 강의자료 샘플로 바로 체험해보세요
           </h2>
         </div>
@@ -156,7 +157,7 @@ export function UploadView({
               key={sample.id}
               disabled={loading}
               onClick={() => onSelectSample(sample)}
-              className="group flex flex-col justify-between rounded-xl border border-border bg-background/80 p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+              className="group flex flex-col justify-between rounded-lg border border-border bg-background/90 p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
             >
               <div>
                 <span className="inline-block rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary mb-2">

@@ -16,13 +16,14 @@ import { validateFilePreUpload } from '@/lib/pdf/validator';
 import { extractTextFromPDF } from '@/lib/pdf/extractor';
 import { fetchWithRetry, AppApiError } from '@/lib/api/retry-client';
 import { SampleLecture } from '@/lib/sample-data';
+import { LandingView } from '@/components/landing-view';
 import { UploadView } from '@/components/upload-view';
 import { OutlineView } from '@/components/outline-view';
 import { DetailView } from '@/components/detail-view';
 import { DevPanel } from '@/components/dev-panel';
 
 export default function Page() {
-  const [view, setView] = useState<View>('upload');
+  const [view, setView] = useState<View>('landing');
   const [file, setFile] = useState<File | null>(null);
   const [pdfData, setPdfData] = useState<PDFExtractResult | null>(null);
   const [outlines, setOutlines] = useState<OutlineItem[]>([]);
@@ -496,29 +497,60 @@ export default function Page() {
 
   return (
     <div className={dark ? 'dark min-h-screen bg-background text-foreground' : 'min-h-screen bg-background text-foreground'}>
-      <header className="sticky top-0 z-10 border-b border-border/80 bg-background/90 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-border/80 bg-background/85 backdrop-blur-md transition-colors">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-5">
           <button
-            onClick={() => setView('upload')}
-            className="flex items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+            onClick={() => setView('landing')}
+            className="flex items-center gap-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg transition-transform active:scale-[0.98]"
           >
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <FileText className="size-5" />
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+              <FileText className="size-4" />
             </span>
-            <span className="text-sm font-semibold tracking-tight sm:text-base">강의자료 목차 요약·퀴즈</span>
+            <span className="text-sm font-bold tracking-tight sm:text-base text-foreground">
+              강의자료 목차 요약·퀴즈
+            </span>
           </button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={dark ? '라이트 모드' : '다크 모드'}
-            onClick={() => setDark(!dark)}
-          >
-            {dark ? <Sun className="size-5" /> : <Moon className="size-5" />}
-          </Button>
+
+          <div className="flex items-center gap-2.5">
+            {view === 'landing' ? (
+              <Button
+                size="sm"
+                onClick={() => setView('upload')}
+                className="h-9 px-4 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-xs transition-all active:scale-[0.98]"
+              >
+                분석 시작하기
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setView('landing')}
+                className="h-9 px-3 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg"
+              >
+                홈으로
+              </Button>
+            )}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-9 rounded-lg"
+              aria-label={dark ? '라이트 모드' : '다크 모드'}
+              onClick={() => setDark(!dark)}
+            >
+              {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-4xl flex-col px-5 py-10 sm:py-16">
+      <main className="mx-auto flex w-full max-w-4xl flex-col px-5 py-8 sm:py-12">
+        {view === 'landing' && (
+          <LandingView
+            onStart={() => setView('upload')}
+            onSelectSample={handleSelectSample}
+          />
+        )}
         {view === 'upload' && (
           <UploadView
             file={file}

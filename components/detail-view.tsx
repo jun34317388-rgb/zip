@@ -70,14 +70,14 @@ export function DetailView({
         {outline.title}
       </h1>
 
-      <div className="mt-8 grid grid-cols-2 rounded-xl border border-border bg-muted p-1">
+      <div className="mt-8 grid grid-cols-2 rounded-lg border border-border bg-muted/70 p-1">
         <button
           aria-selected={tab === 'summary'}
           role="tab"
           onClick={() => setTab('summary')}
-          className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          className={`rounded-md px-4 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             tab === 'summary'
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-card text-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
@@ -87,9 +87,9 @@ export function DetailView({
           aria-selected={tab === 'quiz'}
           role="tab"
           onClick={() => setTab('quiz')}
-          className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          className={`rounded-md px-4 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             tab === 'quiz'
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-card text-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
@@ -209,7 +209,7 @@ function SummarySection({
             {glossary.map((item, idx) => (
               <div
                 key={idx}
-                className="group rounded-xl border border-border/80 bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm"
+                className="group rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-xs"
               >
                 <div className="flex items-center justify-between gap-2 mb-1.5">
                   <span className="text-sm font-bold text-primary group-hover:underline">
@@ -271,14 +271,14 @@ function QuizSection({
   return (
     <div className="mt-7">
       {/* 난이도 선택 칩 */}
-      <div className="mb-6 flex items-center justify-between gap-3 bg-muted/60 p-1.5 rounded-xl border border-border/70">
+      <div className="mb-6 flex items-center justify-between gap-3 bg-muted/60 p-1.5 rounded-lg border border-border/80">
         <span className="text-xs font-semibold text-muted-foreground ml-2">난이도 설정</span>
         <div className="flex gap-1.5">
           <button
             onClick={() => setDifficulty('basic')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               difficulty === 'basic'
-                ? 'bg-background text-primary shadow-sm border border-border'
+                ? 'bg-card text-primary shadow-xs border border-border'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -286,9 +286,9 @@ function QuizSection({
           </button>
           <button
             onClick={() => setDifficulty('advanced')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               difficulty === 'advanced'
-                ? 'bg-background text-primary shadow-sm border border-border'
+                ? 'bg-card text-primary shadow-xs border border-border'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -300,7 +300,7 @@ function QuizSection({
       {loading && quizzes.length === 0 ? (
         <div className="flex flex-col gap-6">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-border bg-card p-6">
+            <div key={i} className="rounded-lg border border-border bg-card p-6">
               <div className="mb-4 h-5 w-24 animate-pulse rounded bg-muted" />
               <div className="mb-6 h-6 w-3/4 animate-pulse rounded bg-muted" />
               <div className="flex flex-col gap-3">
@@ -350,7 +350,7 @@ function QuizSection({
         ))}
 
         {adding && (
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-xs">
             <div className="mb-4 h-5 w-24 animate-pulse rounded bg-muted" />
             <div className="mb-4 h-6 w-3/4 animate-pulse rounded bg-muted" />
             <div className="flex flex-col gap-3">
@@ -433,7 +433,7 @@ function QuizCard({
   };
 
   return (
-    <article className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6 transition-all">
+    <article className="rounded-lg border border-border bg-card p-5 shadow-xs sm:p-6 transition-all">
       <p className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">
         문제 {index + 1}
       </p>

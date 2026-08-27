@@ -46,7 +46,7 @@ export function OutlineView({
           <button
             key={item.id}
             onClick={() => onSelect(item)}
-            className="group flex items-center gap-4 sm:gap-5 rounded-xl border border-border bg-card px-5 py-4 sm:py-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="group flex items-center gap-4 sm:gap-5 rounded-lg border border-border bg-card px-5 py-4 sm:py-5 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span className="flex size-7 items-center justify-center rounded-lg bg-muted font-mono text-xs font-bold text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
               {String(index + 1).padStart(2, '0')}

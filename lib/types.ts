@@ -1,4 +1,5 @@
-export type View = 'upload' | 'outline' | 'detail';
+export type View = 'landing' | 'upload' | 'outline' | 'detail';
+
 
 export type ExceptionKey =
   | 'none'
