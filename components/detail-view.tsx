@@ -182,8 +182,10 @@ function SummarySection({
         .filter(Boolean)
     : [];
 
+  const rawList = (summaries && summaries.length > 0) ? summaries : parsedStreamingBullets;
+
   // 정제 유틸리티를 통한 노이즈 제거 및 구조화
-  const sanitizedItems = sanitizeBulletList(displayBullets);
+  const sanitizedItems = sanitizeBulletList(rawList || []);
 
   if (loading && sanitizedItems.length === 0 && !isStreaming) {
     return (

@@ -76,8 +76,9 @@ export function sanitizeSummaryBullet(raw: string): SanitizedBullet {
 /**
  * 불릿 목록 전체를 일괄 정제하는 헬퍼 함수
  */
-export function sanitizeBulletList(bullets: string[]): SanitizedBullet[] {
+export function sanitizeBulletList(bullets?: string[] | null): SanitizedBullet[] {
+  if (!bullets || !Array.isArray(bullets)) return [];
   return bullets
     .map(sanitizeSummaryBullet)
-    .filter((b) => b.cleanText.length > 5);
+    .filter((b) => b && b.cleanText && b.cleanText.length > 5);
 }
