@@ -182,17 +182,55 @@ function SummarySection({
       {isStreaming && (
         <div className="mb-4 flex items-center gap-2 text-xs font-semibold text-primary animate-pulse">
           <Loader2 className="size-3.5 animate-spin" />
-          <span>실시간으로 핵심 요약을 작성하고 있습니다...</span>
+          <span>Gemini 3.6 Flash가 3단 심층 구조화 요약을 실시간으로 작성하고 있습니다...</span>
         </div>
       )}
 
-      <ul className="flex flex-col gap-4">
-        {displayBullets.map((text, idx) => (
-          <li key={idx} className="flex gap-4 text-sm leading-7 text-foreground/90 sm:text-base animate-in fade-in">
-            <span className="mt-2.5 size-2 shrink-0 rounded-full bg-primary" />
-            <span className="flex-1">{text}</span>
-          </li>
-        ))}
+      <ul className="flex flex-col gap-3.5">
+        {displayBullets.map((text, idx) => {
+          // 3-Tier 뱃지 파싱 (💡, ⚙️, ⚖️)
+          const isDefinition = text.includes('💡') || text.includes('[핵심 정의]');
+          const isMechanism = text.includes('⚙️') || text.includes('[동작 원리]');
+          const isTradeoff = text.includes('⚖️') || text.includes('[비교 및 주의점]') || text.includes('[비교]');
+
+          let badgeText = '';
+          let cleanContent = text;
+
+          if (isDefinition) {
+            badgeText = '핵심 정의';
+            cleanContent = text.replace(/^.*\[핵심 정의\]\s*/, '').replace(/^[💡\s]+/, '');
+          } else if (isMechanism) {
+            badgeText = '동작 메커니즘';
+            cleanContent = text.replace(/^.*\[동작 원리\]\s*/, '').replace(/^[⚙️\s]+/, '');
+          } else if (isTradeoff) {
+            badgeText = '비교 · 분석';
+            cleanContent = text.replace(/^.*\[(비교 및 주의점|비교)\]\s*/, '').replace(/^[⚖️\s]+/, '');
+          }
+
+          return (
+            <li
+              key={idx}
+              className="flex items-start gap-3.5 rounded-xl border border-border/70 bg-card p-4 text-sm leading-relaxed text-foreground sm:text-[15px] shadow-xs transition-all hover:border-primary/40"
+            >
+              {badgeText ? (
+                <span
+                  className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-bold mt-0.5 ${
+                    isDefinition
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : isMechanism
+                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+                      : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
+                  }`}
+                >
+                  {badgeText}
+                </span>
+              ) : (
+                <span className="mt-2 size-2 shrink-0 rounded-full bg-primary" />
+              )}
+              <span className="flex-1 font-normal text-foreground/90">{cleanContent}</span>
+            </li>
+          );
+        })}
       </ul>
 
       {/* Sprint 10 핵심 전공 용어집 (Glossary) 카드 */}

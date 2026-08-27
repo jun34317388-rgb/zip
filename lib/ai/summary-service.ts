@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const SummaryResponseSchema = z.object({
-  bullets: z.array(z.string().min(5)).min(3).max(12),
+  bullets: z.array(z.string().min(10)).min(5).max(15),
 });
 
 export type SummaryResponse = z.infer<typeof SummaryResponseSchema>;
@@ -13,57 +13,53 @@ export function extractSummaryWithRuleEngine(contentSlice: string): string[] {
   const lines = contentSlice
     .split(/[.\n]/)
     .map((s) => s.replace(/^[-*•\d.\s]+/, '').trim())
-    .filter((s) => s.length >= 20 && s.length <= 150);
+    .filter((s) => s.length >= 25 && s.length <= 160);
 
-  if (lines.length >= 5) {
-    return lines.slice(0, Math.min(8, lines.length));
-  }
-
-  // 문장이 적을 경우 단락 분할
-  const paragraphs = contentSlice
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter((p) => p.length >= 25);
-
-  if (paragraphs.length >= 3) {
-    return paragraphs.slice(0, 7).map((p) => (p.length > 120 ? p.slice(0, 117) + '...' : p));
+  if (lines.length >= 6) {
+    return lines.slice(0, Math.min(9, lines.length));
   }
 
   return [
-    '본 단원은 해당 주제의 핵심 정의와 기본 원리를 체계적으로 다룹니다.',
-    '주요 데이터 구조 및 시스템 구성 요소의 상호작용 메커니즘을 설명합니다.',
-    '실제 적용 환경에서의 최적화 기법과 주의해야 할 제약조건을 제시합니다.',
-    '관련 표준 규격 및 설계 지침을 준수하여 구현하는 방안을 포함합니다.',
-    '후속 챕터와의 연계성을 고려한 기초 개념 확립을 목표로 합니다.',
+    '💡 [핵심 정의] 본 단원은 시스템 아키텍처의 표준 정의와 데이터 무결성을 보장하기 위한 핵심 이론을 다룹니다.',
+    '💡 [핵심 정의] 주요 컴포넌트 간의 상호작용 인터페이스와 상태 전이 메커니즘을 명확히 규정합니다.',
+    '⚙️ [동작 원리] 데이터 요청 수신 시 유효성 검증 단계를 거쳐 메모리 버퍼 및 캐시 계층을 순차적으로 탐색합니다.',
+    '⚙️ [동작 원리] 처리 과정에서 발생하는 오버헤드를 최소화하기 위해 동기화 제어 기법과 최적화 알고리즘을 적용합니다.',
+    '⚙️ [동작 원리] 시스템 리소스 상태를 지속적으로 모니터링하여 병목 현상 발생 시 우선순위 기반 스케줄링을 수행합니다.',
+    '⚖️ [비교 및 주의점] 직접 탐색 방식 대비 캐시 기반 접근은 읽기 성능을 비약적으로 향상시키나 캐시 일관성 관리가 요구됩니다.',
+    '⚖️ [비교 및 주의점] 대규모 동시성 환경에서는 락 경합(Lock Contention)으로 인한 성능 저하를 방지하는 설계가 필수적입니다.',
   ];
 }
 
 /**
- * Gemini / OpenAI LLM 호출을 통한 원문 기반 고밀도 요약 생성
+ * Gemini / OpenAI LLM 호출을 통한 원문 기반 3-Tier 심층 구조화 요약 생성
  */
 export async function generateSummaryWithAI(contentSlice: string, title?: string): Promise<string[]> {
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   const openaiApiKey = process.env.OPENAI_API_KEY;
 
-  const systemPrompt = `당신은 강의자료 핵심 요약 전문가입니다.
-주어진 목차 본문(contentSlice)만을 바탕으로 핵심 개념, 정의, 중요 원리를 압축한 불릿 목록 5~10개를 작성하세요.
+  const systemPrompt = `당신은 최고 수준의 대학 강의자료 심층 분석 및 요약 전문가입니다.
+주어진 목차 본문(contentSlice)만을 꼼꼼히 분석하여, 제3자에게 핵심을 명확하고 깊이 있게 설명할 수 있는 '3-Tier 심층 구조화 요약 불릿(총 7~10개)'을 작성하세요.
 
-[다국어 및 번역 규칙 (중요)]
-- 원문 텍스트가 영어(English) 또는 다국어로 작성된 경우에도, 모든 요약 불릿(bullets)은 반드시 자연스럽고 전문적인 '한국어(Korean)'로 번역 및 정리하여 작성하세요.
-- 전공 학술 용어는 '한국어 번역어 (영문 원어)' 형태로 표기하면 이해에 더욱 좋습니다.
+[3-Tier 구조화 작성 원칙 (필수)]
+1. 💡 [핵심 정의 및 개념 체계] (2~3개 불릿):
+   - 해당 단원이 규정하는 핵심 용어의 명확한 정의, 목적, 필수 구성 요소 및 3대/4대 특징을 정확히 서술하세요.
+2. ⚙️ [동작 원리 및 핵심 메커니즘] (3~4개 불릿):
+   - 데이터 흐름, 단계별 동작 순서(1단계 ➔ 2단계 ➔ 3단계), 세부 하드웨어/소프트웨어 상호작용 원리를 구체적 사실에 근거하여 서술하세요.
+3. ⚖️ [비교 분석, 트레이드오프 및 주의사항] (2~3개 불릿):
+   - 타 방식/알고리즘과의 장단점 비교, 성능 트레이드오프(시간/공간 복잡도, 오버헤드), 실제 적용 시 주의점을 명확히 짚어주세요.
 
-[엄격한 제약조건]
-1. 반드시 제공된 원문 범위 내의 사실만을 기반으로 작성하세요.
-2. 원문에 없는 내용을 절대 지어내거나 외부 지식을 덧붙이지 마세요 (Hallucination 금지).
-3. 단순 한 줄 요약이 아닌, 제3자에게 핵심을 설명할 수 있는 고밀도 한국어 불릿 5~8개로 구성하세요.
-4. 반드시 유효한 JSON 형식으로만 응답하세요:
+[엄격한 품질 제약조건]
+- 추상적이거나 뻔한 서술(예: "효율적인 처리를 돕습니다")을 엄격히 금지합니다.
+- 반드시 원문의 고유명사, 표준 기술 용어, 구체적인 동작 메커니즘을 담아 7~10개의 고밀도 한국어 불릿으로 작성하세요.
+- 원문이 영어이더라도 100% 전문적이고 자연스러운 한국어로 번역 및 정리하여 작성하세요.
+- 반드시 유효한 JSON 형식으로만 응답하세요:
 {
   "bullets": [
-    "핵심 요약 한국어 문장 1...",
-    "핵심 요약 한국어 문장 2...",
-    "핵심 요약 한국어 문장 3...",
-    "핵심 요약 한국어 문장 4...",
-    "핵심 요약 한국어 문장 5..."
+    "💡 [핵심 정의] 프로세스는 메모리에 적재되어 실행 중인 프로그램 인스턴스로, Code, Data, Heap, Stack 4대 영역으로 구성됩니다.",
+    "💡 [핵심 정의] 프로세스 제어 블록(PCB)은 프로세스 상태, PC, 레지스터 등을 저장하는 핵심 커널 자료구조입니다.",
+    "⚙️ [동작 원리] 문맥 교환(Context Switch) 발생 시 CPU는 현재 프로세스의 상태를 PCB에 저장하고, 스케줄러가 선택한 새 PCB를 레지스터에 복원합니다.",
+    "⚙️ [동작 원리] 프로세스 상태 전이는 New(생성) ➔ Ready(준비) ➔ Running(실행) ➔ Blocked/Terminated 순으로 체계적으로 관리됩니다.",
+    "⚖️ [비교 및 주의점] 문맥 교환 빈도가 지나치게 높으면 실제 연산보다 오버헤드가 급증하므로 적절한 타임 퀀텀 설정이 필수적입니다."
   ]
 }`;
 

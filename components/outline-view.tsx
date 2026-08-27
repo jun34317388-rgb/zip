@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, Upload } from 'lucide-react';
+import { BookOpen, ChevronRight, Clock, Hash, Sparkles, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OutlineItem, View } from '@/lib/types';
 
@@ -24,37 +24,74 @@ export function OutlineView({
 }: OutlineViewProps) {
   return (
     <section className="mx-auto w-full max-w-2xl animate-in">
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/70 pb-6">
         <div className="min-w-0">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">분석이 완료되었어요</p>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold mb-2.5">
+            <Sparkles className="size-3" />
+            <span>구조화 분석 완료</span>
+          </div>
           <h1 className="truncate text-xl font-bold sm:text-2xl text-foreground" title={fileLabel}>
             {fileLabel}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {pageCount ? `${pageCount}페이지 (${charCount?.toLocaleString()}자) · ` : ''}
-            목차 <span className="font-semibold text-foreground">{outlines.length}개</span>를 찾았어요
+          <p className="mt-2 text-xs sm:text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+            {pageCount ? <span>총 {pageCount}페이지 ({charCount?.toLocaleString()}자)</span> : null}
+            <span>•</span>
+            <span>핵심 목차 <strong className="text-foreground">{outlines.length}개</strong> 챕터</span>
           </p>
         </div>
-        <Button variant="outline" className="shrink-0 h-10 gap-2" onClick={onReset}>
-          <Upload className="size-4" />
-          새 PDF 업로드
+        <Button variant="outline" size="sm" className="shrink-0 h-9 gap-1.5 text-xs font-semibold" onClick={onReset}>
+          <Upload className="size-3.5" />
+          새 파일 분석
         </Button>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3.5">
         {outlines.map((item, index) => (
           <button
             key={item.id}
             onClick={() => onSelect(item)}
-            className="group flex items-center gap-4 sm:gap-5 rounded-xl border border-border bg-card px-5 py-4 sm:py-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="group flex flex-col gap-2.5 rounded-xl border border-border bg-card p-4 sm:p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring relative overflow-hidden"
           >
-            <span className="flex size-7 items-center justify-center rounded-lg bg-muted font-mono text-xs font-bold text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-              {String(index + 1).padStart(2, '0')}
-            </span>
-            <span className="flex-1 text-sm font-medium sm:text-base text-card-foreground line-clamp-2">
-              {item.title}
-            </span>
-            <ChevronRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+            {/* 상단 메타 라인: 챕터 번호 뱃지 & 예상 학습 시간 */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-mono text-xs font-bold shadow-xs">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+                  Chapter {index + 1}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                <Clock className="size-3 text-muted-foreground" />
+                <span>약 {item.estimatedMinutes || 5}분 학습</span>
+              </div>
+            </div>
+
+            {/* 본문 타이틀 & 화살표 */}
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-sm font-bold sm:text-base text-foreground leading-snug group-hover:text-primary transition-colors">
+                {item.title}
+              </h3>
+              <div className="size-7 rounded-full bg-muted/60 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary-foreground transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </div>
+
+            {/* 하단 토픽 태그 칩 리스트 */}
+            {item.topicTags && item.topicTags.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-border/50">
+                {item.topicTags.map((tag, tagIdx) => (
+                  <span
+                    key={tagIdx}
+                    className="inline-flex items-center gap-0.5 rounded-md bg-muted/70 hover:bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors"
+                  >
+                    <Hash className="size-2.5 text-primary/70" />
+                    <span>{tag}</span>
+                  </span>
+                ))}
+              </div>
+            )}
           </button>
         ))}
       </div>

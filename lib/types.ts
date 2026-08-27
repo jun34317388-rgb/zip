@@ -45,6 +45,8 @@ export interface OutlineItem {
   id: string;
   order: number;
   title: string;
+  topicTags?: string[];
+  estimatedMinutes?: number;
   contentSlice: string;
 }
 
